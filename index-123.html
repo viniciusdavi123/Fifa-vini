@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FIFA VINI</title>
+<style>
+*{box-sizing:border-box} body{margin:0;background:#111;color:white;font-family:Arial,sans-serif;text-align:center}
+h1{margin:18px 0 8px} p{margin:5px 0 15px;color:#ccc}
+.menu{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+button{border:0;border-radius:10px;padding:12px 20px;font-weight:bold;cursor:pointer;font-size:16px}
+#camera-menu button{background:#202b31;color:#fff;border:1px solid #64727a}
+#beira{background:#c8102e;color:#fff} #arena{background:#1682c4;color:#fff}
+canvas{display:block;width:min(98vw,1400px);height:auto;max-width:98vw;border:3px solid #ddd;border-radius:10px;background:#16803a}
+#info{margin-top:10px;font-size:18px}
+</style>
+
+<style id="fv-account-mode-style">
+#fv-account-screen,#fv-mode-screen{position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;padding:22px;background:radial-gradient(ellipse at 70% 25%,#28553f,#07100e 65%);font-family:Arial,sans-serif;color:#fff}
+.fv-account-card{width:min(430px,100%);padding:28px;background:#0d1719f5;border:1px solid #d7ff0055;box-shadow:0 20px 70px #0009}
+.fv-account-card h2{font-size:clamp(28px,7vw,42px);font-style:italic;margin:0 0 8px}
+.fv-account-card h2 span{color:#d7ff00}
+.fv-account-card p{color:#c8d0d5;line-height:1.5}
+#fv-username{width:100%;padding:14px;margin:12px 0 8px;background:#f4f5f5;color:#111;border:0;border-radius:3px;font-size:16px}
+.fv-account-card button{width:100%;padding:15px;margin-top:10px;background:#d7ff00;color:#111;font-weight:900;border-radius:3px}
+.fv-account-card button.secondary{background:#1d2a2d;color:#fff;border:1px solid #657276}
+.fv-mode-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.fv-mode-buttons button{min-height:130px;padding:16px;background:#d7ff00;color:#111;font-size:17px;line-height:1.4}
+.fv-mode-buttons button span{display:block;font-size:34px;margin-bottom:10px}
+#fv-online-note{display:none;padding:12px;background:#1d2a2d;border-left:3px solid #d7ff00;margin-top:14px;font-size:13px;line-height:1.5}
+#fv-online-screen{display:none;position:fixed;inset:0;z-index:20010;overflow:auto;padding:20px;background:radial-gradient(ellipse at 70% 20%,#28553f,#07100e 65%);color:#fff;font-family:Arial,sans-serif;text-align:left}
+.fv-online-wrap{width:min(620px,100%);margin:0 auto;padding:22px;background:#0d1719f5;border:1px solid #d7ff0055}
+.fv-online-wrap h2{margin:0 0 8px;font-size:clamp(25px,6vw,36px)}.fv-online-wrap h2 span{color:#d7ff00}
+.fv-online-wrap p{line-height:1.5}.fv-user-card{display:flex;align-items:center;gap:12px;padding:13px;margin:10px 0;background:#1d2a2d;border:1px solid #42504e;border-radius:8px}
+.fv-user-avatar{width:42px;height:42px;flex:0 0 42px;border-radius:50%;display:grid;place-items:center;background:#d7ff00;color:#111;font-weight:900}
+.fv-user-info{flex:1;min-width:0}.fv-user-info strong{display:block}.fv-user-info small{color:#aebdb8}.fv-online-dot{color:#d7ff00;font-size:12px}
+.fv-online-wrap button{padding:12px;background:#d7ff00;color:#111;border:0;border-radius:5px;font-weight:900}.fv-online-wrap button.secondary{background:#263438;color:#fff;border:1px solid #667775}
+.fv-online-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.fv-online-actions button{flex:1}
+.fv-online-status{padding:12px;margin-top:12px;background:#172326;border-left:3px solid #d7ff00;line-height:1.5;font-size:13px}
+.fv-online-wrap input,.fv-online-wrap select{width:100%;padding:12px;margin:7px 0 12px;border-radius:5px;border:1px solid #60706c;background:#f4f5f5;color:#111;font-size:16px}
+@media(max-width:380px){.fv-mode-buttons{grid-template-columns:1fr}.fv-mode-buttons button{min-height:85px}.fv-mode-buttons button span{display:inline;margin-right:8px}}
+</style>
+
+</head>
+<body>
+
+<style>
+:root{--lime:#d7ff00;--panel:#10161beF;--muted:#c8d0d5}
+#fv-menu{position:fixed;inset:0;z-index:10000;overflow:auto;display:flex;align-items:stretch;justify-content:space-between;background:linear-gradient(90deg,rgba(3,10,15,.97) 0%,rgba(3,10,15,.87) 42%,rgba(3,10,15,.18) 100%),radial-gradient(ellipse at 75% 30%,#427c55 0%,#163d31 30%,#0b201c 63%,#050b10 100%);font-family:Arial,sans-serif;color:#fff;text-align:left}
+#fv-menu:before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 54px,rgba(255,255,255,.025) 55px 56px),linear-gradient(180deg,transparent 65%,rgba(0,0,0,.55));}
+#fv-menu:after{content:"";position:absolute;right:2%;top:16%;width:54%;height:66%;border:2px solid #ffffff30;border-radius:3px;transform:perspective(500px) rotateX(5deg);background:repeating-linear-gradient(90deg,#ffffff09 0 10%,#00000008 10% 20%);box-shadow:0 0 0 20px #ffffff05,0 25px 80px #0008;pointer-events:none}
+#fv-panel{position:relative;z-index:1;width:min(540px,100%);min-height:100%;padding:clamp(24px,5vw,64px);background:linear-gradient(90deg,rgba(5,11,16,.92),rgba(5,11,16,.72),transparent);display:flex;flex-direction:column;justify-content:center}
+#fv-kicker{font-size:12px;letter-spacing:5px;color:var(--lime);font-weight:900;margin-bottom:12px}
+#fv-panel h1{font-size:clamp(42px,8vw,78px);font-style:italic;letter-spacing:-3px;line-height:.9;margin:0 0 15px;color:#fff;text-shadow:0 4px 25px #000}
+#fv-panel h1 span{color:var(--lime)}
+#fv-panel p{color:#d0d8dc;line-height:1.5;margin:0 0 22px;max-width:380px}
+.fv-section-label{display:block;font-size:11px;font-weight:900;letter-spacing:2px;color:#c2cbd0;margin:16px 0 8px;text-transform:uppercase}
+#fv-stadium{width:100%;padding:14px 13px;border:1px solid #ffffff55;border-left:4px solid var(--lime);background:#101a20;color:#fff;font-size:16px;font-weight:bold;border-radius:3px;outline:none}
+#fv-stadium-preview{position:relative;height:118px;margin-top:9px;overflow:hidden;border:1px solid #ffffff38;background:linear-gradient(180deg,#172d3b 0%,#304f5a 45%,#28643b 46%,#163e27 100%);box-shadow:inset 0 -18px 35px #0007}
+#fv-stadium-preview:before{content:"";position:absolute;left:8%;right:8%;top:13px;height:47px;border:8px solid var(--stadium-color,#b5122b);border-bottom:0;border-radius:50% 50% 0 0;box-shadow:0 0 0 4px #ffffff25,0 8px 0 #1118}
+#fv-stadium-preview:after{content:"";position:absolute;left:23%;right:23%;bottom:-13px;height:56px;border:2px solid #ffffffb8;transform:perspective(100px) rotateX(12deg);background:repeating-linear-gradient(90deg,#ffffff13 0 12%,transparent 12% 24%)}
+#fv-stadium-name{position:absolute;z-index:2;left:10px;bottom:8px;font-size:11px;letter-spacing:1.3px;font-weight:900;text-shadow:0 2px 5px #000}
+#fv-stadium-tag{position:absolute;z-index:2;right:10px;top:8px;padding:4px 6px;background:#0008;color:var(--lime);font-size:9px;letter-spacing:1px;font-weight:900}
+#fv-main,#fv-start{width:100%;margin-top:16px;background:var(--lime);color:#10150a;font-size:17px;letter-spacing:1px;padding:17px 20px;border-radius:2px;clip-path:polygon(0 0,100% 0,100% 72%,94% 100%,0 100%);font-weight:900}
+#fv-main:hover,#fv-start:hover{filter:brightness(1.12)}
+#fv-selectors{display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
+#fv-selectors .team-card{padding:13px;background:#101a20eF;border:1px solid #ffffff30;border-radius:3px}
+#fv-selectors label{display:block;font-size:11px;letter-spacing:1px;font-weight:900;margin-bottom:8px;color:#dce3e7;text-transform:uppercase}
+#fv-selectors select{width:100%;padding:11px 8px;border:1px solid #4c5a61;border-radius:2px;background:#f0f2f2;color:#101820;font-size:14px;font-weight:bold}
+#fv-selectors .full{grid-column:1/-1}
+#fv-competition{display:none;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+#fv-competition button{padding:13px 7px;background:#1c2a30;color:#fff;border:1px solid #64727a;border-radius:2px;font-size:12px;letter-spacing:.5px}
+#fv-competition button.selected{background:var(--lime);color:#10150a;border-color:var(--lime)}
+#fv-controls{font-size:11px;color:#c4cdd1;margin-top:16px;line-height:1.7;letter-spacing:.3px}
+#fv-menu .fv-badge{display:inline-flex;align-items:center;gap:6px;color:#d7ff00;font-size:10px;font-weight:900;letter-spacing:1.4px;margin-bottom:13px}
+#fv-menu .fv-badge:before{content:"";width:7px;height:7px;border-radius:50%;background:#d7ff00;box-shadow:0 0 12px #d7ff00}
+#fv-side-mark{position:absolute;z-index:1;right:5%;bottom:8%;text-align:right;text-shadow:0 3px 12px #000;pointer-events:none}
+#fv-side-mark strong{display:block;font-size:clamp(22px,4vw,48px);font-style:italic;letter-spacing:2px}
+#fv-side-mark small{color:var(--lime);font-weight:bold;letter-spacing:3px}
+@media(max-width:650px){#fv-stadium-preview{height:88px}#fv-menu{background:linear-gradient(90deg,rgba(3,10,15,.95),rgba(3,10,15,.73)),radial-gradient(ellipse at 70% 35%,#427c55 0%,#102e25 50%,#050b10 100%)}#fv-menu:after{right:-30%;top:24%;width:110%;height:46%;opacity:.6}#fv-panel{padding:28px 22px;width:100%;background:linear-gradient(90deg,#050b10dc,#050b1090)}#fv-side-mark{display:none}#fv-selectors{grid-template-columns:1fr 1fr}#fv-selectors .team-card{padding:9px}#fv-selectors select{font-size:12px;padding:10px 4px}}
+</style>
+
+<style id="fv-landscape-and-audio-ui">
+html,body{min-height:100%;overscroll-behavior:none} body{touch-action:manipulation}
+@media (orientation:landscape) and (max-height:520px){
+ body{overflow:hidden} #fv-menu{overflow:auto} #fv-panel{padding:12px 22px;width:min(440px,54vw);min-height:100vh} #fv-panel h1{font-size:clamp(32px,7vh,52px);margin-bottom:8px} #fv-panel p{margin-bottom:8px;font-size:13px} .fv-section-label{margin:7px 0 5px} #fv-stadium-preview{height:48px;margin-top:5px} #fv-main,#fv-start{padding:10px;margin-top:8px;font-size:13px} #fv-selectors,#fv-competition{margin-top:7px;gap:6px} #fv-controls{margin-top:8px;font-size:9px} canvas{display:block;width:min(100vw,178.5714dvh);height:auto;max-width:100vw;max-height:100dvh;aspect-ratio:25/14;margin:0 auto;object-fit:contain;border:0;border-radius:0} #camera-menu{position:fixed;top:4px;right:6px;z-index:9998;margin:0!important} #camera-menu button{padding:6px 9px;font-size:11px} #info{display:none} #mobile-controls-fifa-vini{left:10px;bottom:10px;transform:scale(.92);transform-origin:bottom left} #mobile-kick-fifa-vini{right:14px;bottom:14px;width:78px;height:78px} #mobile-tackle-fifa-vini{right:24px;bottom:104px;width:68px;height:42px}
+}
+#fv-rotate-tip{display:none;position:fixed;inset:0;z-index:10002;background:#07110df2;color:#fff;align-items:center;justify-content:center;text-align:center;padding:28px;font-weight:bold;line-height:1.6}
+@media (orientation:portrait) and (max-width:800px){#fv-rotate-tip.show{display:flex}}
+</style>
+<div id="fv-rotate-tip">📱 VIRE O CELULAR DE LADO<br>para jogar FIFA VINI na horizontal</div>
+
+
+
+<div id="fv-account-screen">
+ <form class="fv-account-card" id="fv-account-form">
+  <div style="font-size:11px;letter-spacing:4px;color:#d7ff00;font-weight:900;margin-bottom:14px">BEM-VINDO AO CAMPO</div>
+  <h2>FIFA <span>VINI</span></h2>
+  <p>Crie seu usuário para entrar no jogo. Seu nome ficará salvo neste navegador.</p>
+  <label for="fv-username" style="font-size:12px;font-weight:bold;letter-spacing:1px">NOME DE USUÁRIO</label>
+  <input id="fv-username" name="username" maxlength="18" autocomplete="nickname" placeholder="Ex.: Vini10" required>
+  <button type="submit">CRIAR USUÁRIO　➜</button>
+ </form>
+</div>
+<div id="fv-mode-screen" style="display:none">
+ <div class="fv-account-card">
+  <div style="font-size:11px;letter-spacing:4px;color:#d7ff00;font-weight:900;margin-bottom:14px">JOGADOR CONECTADO</div>
+  <h2>OLÁ, <span id="fv-saved-name">JOGADOR</span>!</h2>
+  <p>Escolha como quer jogar.</p>
+  <div class="fv-mode-buttons">
+   <button id="fv-play-online"><span>🌐</span>JOGAR ONLINE</button>
+   <button id="fv-play-robot"><span>🤖</span>JOGAR COM ROBÔ</button>
+  </div>
+  <div id="fv-online-note">O modo online entre celulares precisa de um servidor para sincronizar a partida pela internet. Esta versão do arquivo ainda não tem esse servidor; o modo com robô já pode ser jogado aqui.</div>
+  <button class="secondary" id="fv-change-user">TROCAR USUÁRIO</button>
+ </div>
+</div>
+<div id="fv-online-screen">
+ <div class="fv-online-wrap">
+  <div style="font-size:11px;letter-spacing:3px;color:#d7ff00;font-weight:900;margin-bottom:12px">FIFA VINI • MULTIPLAYER</div>
+  <h2>JOGADORES <span>ONLINE</span></h2>
+  <p>Jogadores perto de você</p>
+  <div class="fv-online-status">A lista de jogadores reais e os convites entre celulares precisam de um servidor online. Ele ainda não está conectado, então ninguém real aparecerá aqui por enquanto.</div>
+  <div id="fv-nearby-users"></div>
+  <div id="fv-invite-status" class="fv-online-status" style="display:none"></div>
+  <div id="fv-match-setup" style="display:none;margin-top:16px">
+   <h2 style="font-size:23px">MONTAR <span>A PARTIDA</span></h2>
+   <p id="fv-match-opponent">Adversário selecionado</p>
+   <label for="fv-online-stadium">Estádio</label><select id="fv-online-stadium"><option value="beira">Estádio Beira-Rio</option><option value="arena-gremio">Arena do Grêmio</option><option value="maracana">Maracanã</option><option value="neo-quimica">Neo Química Arena</option><option value="allianz">Allianz Parque</option><option value="santiago-bernabeu">Santiago Bernabéu</option><option value="camp-nou">Spotify Camp Nou</option><option value="wembley">Wembley</option><option value="arena-vini">Arena Vini</option></select>
+   <label for="fv-online-team">Seu time (clube)</label><select id="fv-online-team"><option>Internacional</option><option>Grêmio</option><option>Flamengo</option><option>Palmeiras</option><option>Corinthians</option><option>São Paulo</option><option>Santos</option><option>Atlético Mineiro</option><option>Cruzeiro</option><option>Botafogo</option><option>Fluminense</option><option>Real Madrid</option><option>Barcelona</option><option>Manchester City</option><option>Manchester United</option><option>Liverpool</option><option>Arsenal</option><option>Bayern de Munique</option><option>Paris Saint-Germain</option><option>Juventus</option>
+   <label for="fv-online-format">Formato da partida</label><select id="fv-online-format"><option>Amistoso • 2 tempos</option><option>Partida rápida</option><option>Decisão por pênaltis</option></select>
+   <button id="fv-send-invite" type="button">ENVIAR CONVITE</button>
+  </div>
+  <div class="fv-online-actions"><button class="secondary" id="fv-online-back" type="button">VOLTAR</button></div>
+ </div>
+</div>
+<div id="fv-incoming-invite" style="display:none;position:fixed;inset:0;z-index:30000;background:#000d;align-items:center;justify-content:center;padding:20px;color:#fff;font-family:Arial,sans-serif">
+ <div style="width:min(420px,100%);background:#0d1719;border:1px solid #d7ff00;padding:24px;border-radius:12px;text-align:center;box-shadow:0 15px 60px #0009">
+  <div style="font-size:38px;margin-bottom:8px">⚽</div>
+  <h2 style="margin:0 0 14px">CONVITE PARA JOGAR</h2>
+  <p id="fv-incoming-invite-message" style="font-size:17px;line-height:1.5">(Usuário) está te convidando para jogar!</p>
+  <div class="fv-online-actions">
+   <button id="fv-accept-invite" type="button">ACEITAR</button>
+   <button id="fv-decline-invite" class="secondary" type="button">RECUSAR</button>
+  </div>
+  <p id="fv-incoming-invite-status" style="font-size:12px;color:#aebdb8;line-height:1.5;margin-bottom:0"></p>
+ </div>
+</div>
+
+<div id="fv-difficulty-screen" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(2,10,8,.96);align-items:center;justify-content:center;padding:20px;color:white;font-family:Arial,sans-serif">
+ <div class="fv-account-card" style="width:min(420px,100%);text-align:center">
+  <div style="font-size:11px;letter-spacing:4px;color:#d7ff00;font-weight:900;margin-bottom:14px">ESCOLHA SEU DESAFIO</div>
+  <h2>DIFICULDADE <span>DO ROBÔ</span></h2>
+  <p>Contra quem você quer jogar?</p>
+  <div style="display:grid;gap:10px;margin:20px 0">
+   <button type="button" data-robot-difficulty="easy">🟢 FÁCIL</button>
+   <button type="button" data-robot-difficulty="medium">🟡 MÉDIO</button>
+   <button type="button" data-robot-difficulty="hard">🔴 DIFÍCIL</button>
+  </div>
+  <button type="button" class="secondary" id="fv-back-modes">VOLTAR</button>
+ </div>
+</div>
+
+<div id="fv-menu">
+ <div id="fv-panel">
+  <div id="fv-kicker">EA-STYLE FOOTBALL EXPERIENCE</div>
+  <div class="fv-badge">MODO LOCAL • 2 JOGADORES</div>
+  <h1>FIFA <span>VINI</span></h1>
+  <p>Entre em campo. Escolha seu clube, estádio e competição.</p>
+  <label class="fv-section-label" for="fv-stadium">Estádio da partida</label>
+  <select id="fv-stadium">
+   <option value="Beira-Rio">Estádio Beira-Rio • Internacional</option>
+   <option value="Arena do Grêmio">Arena do Grêmio • Grêmio</option>
+   <option value="Allianz Parque">Allianz Parque • Palmeiras</option>
+   <option value="Maracanã">Maracanã • Flamengo</option>
+   <option value="Mineirão">Mineirão • Cruzeiro</option>
+   <option value="Arena MRV">Arena MRV • Atlético Mineiro</option>
+  </select>
+  <div id="fv-stadium-preview" aria-label="Prévia visual do estádio"><span id="fv-stadium-tag">ESTÁDIO SELECIONADO</span><span id="fv-stadium-name">ESTÁDIO BEIRA-RIO</span></div>
+  <button id="fv-main">JOGAR AGORA　➜</button>
+  <div id="fv-competition">
+   <button data-comp="Brasileirão" class="selected">🏆 BRASILEIRÃO</button>
+   <button data-comp="Libertadores">🌎 LIBERTADORES</button>
+  </div>
+  <label class="fv-section-label" for="fv-stage">Fase do torneio</label>
+  <select id="fv-stage" style="display:none;width:100%;padding:13px;background:#101a20;color:white;border:1px solid #64727a;font-weight:bold">
+   <option value="groups">FASE DE GRUPOS</option>
+   <option value="knockout">MATA-MATA</option>
+   <option value="final">FINAL VALENDO A TAÇA 🏆</option>
+  </select>
+  <div id="fv-selectors">
+   <div class="team-card"><label for="fv-team1">Jogador 1 • time da casa</label>
+    <select id="fv-team1"><option value="Inter">Internacional</option><option value="Gremio">Grêmio</option><option value="Palmeiras">Palmeiras</option><option value="Flamengo">Flamengo</option><option value="Cruzeiro">Cruzeiro</option><option value="Atletico">Atlético Mineiro</option><option value="RealMadrid">Real Madrid</option><option value="Barcelona">Barcelona</option></select>
+   </div>
+   <div class="team-card"><label for="fv-team2">Jogador 2 • visitante</label>
+    <select id="fv-team2"><option value="Gremio">Grêmio</option><option value="Inter">Internacional</option><option value="Flamengo">Flamengo</option><option value="Palmeiras">Palmeiras</option><option value="Atletico">Atlético Mineiro</option><option value="Cruzeiro">Cruzeiro</option><option value="RealMadrid">Real Madrid</option><option value="Barcelona">Barcelona</option></select>
+   </div>
+   <button id="fv-start" class="full">COMEÇAR PARTIDA　▶</button>
+  </div>
+  <div id="fv-controls">CONTROLES　•　P1: W A S D + ESPAÇO<br>P2: SETAS + ENTER　•　CELULAR: BOTÕES NA TELA</div>
+ </div>
+ <div id="fv-side-mark"><small>SEU CLUBE. SUA HISTÓRIA.</small><strong>O JOGO É SEU.</strong></div>
+</div>
+
+<div class="menu" id="camera-menu" style="margin:10px 0"><button id="pause-game">⏸ PAUSAR</button></div>
+<canvas id="game" width="1000" height="560"></canvas>
+<div id="info">Use WASD ou as setas para mover. Espaço para chutar.</div>
+
+<script>
+const c=document.getElementById("game"),ctx=c.getContext("2d");
+let stadium="Beira-Rio", score=[0,0], camera="tv", competition="Brasileirão", camX=500, camY=280;
+let paused=false, matchStart=performance.now(), lastGoalTime=0, dribbleUntil=0, spinUntil=0, sprintUntil=0;
+let chargingPlayer=null, chargeStartedAt=0, chargePower=0;
+let player={x:270,y:280,r:18,speed:2.8,downUntil:0,moveDX:1,moveDY:0};
+let player2={x:730,y:280,r:18,speed:2.25,downUntil:0,moveDX:-1,moveDY:0};
+let ballOwner=null;
+let barrierTeam=null, barrierUntil=0, concedingTeam=null;
+let team1="Inter", team2="Gremio";
+let gameMode="local", robotThinkAt=0, robotTackleAt=0, robotDifficulty="medium", robotDribbleUntil=0;
+let tackleReadyAt=0, dribbleReadyAt=0;
+const teamColors={Inter:"#d71935",Gremio:"#1682c4",Palmeiras:"#168447",Flamengo:"#c92335",Cruzeiro:"#2877d4",Atletico:"#eeeeee",RealMadrid:"#f4f0e8",Barcelona:"#a50044"};
+const teamNames={Inter:"Internacional",Gremio:"Grêmio",Palmeiras:"Palmeiras",Flamengo:"Flamengo",Cruzeiro:"Cruzeiro",Atletico:"Atlético-MG",RealMadrid:"Real Madrid",Barcelona:"Barcelona"};
+let ball={x:500,y:280,r:10,vx:0,vy:0};
+const keys={};
+
+document.addEventListener("keydown",e=>{
+  keys[e.key.toLowerCase()]=true;
+  if(e.code==="Space"&&!e.repeat)startShotCharge(player);
+  if(e.key==="Enter"&&!e.repeat)startShotCharge(player2);
+  if(e.key.toLowerCase()==="e")tackle(player,player2);
+  if(e.key.toLowerCase()==="q")dribble(player);
+  if(e.key==="/")tackle(player2,player);
+});
+document.addEventListener("keyup",e=>{
+  keys[e.key.toLowerCase()]=false;
+  if(e.code==="Space"&&chargingPlayer===player)releaseShotCharge();
+  if(e.key==="Enter"&&chargingPlayer===player2)releaseShotCharge();
+});
+
+const stadiumColors={"Beira-Rio":"#b5122b","Arena do Grêmio":"#1682c4","Allianz Parque":"#168447","Maracanã":"#c92335","Mineirão":"#2877d4","Arena MRV":"#777777"};
+function updateStadiumPreview(){
+ const selected=document.getElementById("fv-stadium").value;
+ const preview=document.getElementById("fv-stadium-preview");
+ preview.style.setProperty("--stadium-color",stadiumColors[selected]||"#b5122b");
+ document.getElementById("fv-stadium-name").textContent=selected.toUpperCase();
+}
+document.getElementById("fv-stadium").onchange=e=>{stadium=e.target.value;updateStadiumPreview();reset()};
+updateStadiumPreview();
+camera="tv";
+document.getElementById("pause-game").onclick=()=>{paused=!paused;document.getElementById("pause-game").textContent=paused?"▶ CONTINUAR":"⏸ PAUSAR";};
+
+function reset(){player.x=270;player.y=280;player2.x=730;player2.y=280;player.moveDX=1;player.moveDY=0;player2.moveDX=-1;player2.moveDY=0;ball.x=500;ball.y=280;ball.vx=ball.vy=0;ballOwner=null}
+document.getElementById("fv-main").onclick=()=>{
+ document.getElementById("fv-main").style.display="none";
+ document.getElementById("fv-competition").style.display="grid";
+ document.getElementById("fv-selectors").style.display="grid";
+ document.getElementById("fv-stage").style.display="block";
+};
+document.querySelectorAll("#fv-competition button").forEach(btn=>btn.onclick=()=>{
+ competition=btn.dataset.comp;
+ document.querySelectorAll("#fv-competition button").forEach(b=>b.classList.toggle("selected",b===btn));
+});
+document.getElementById("fv-start").onclick=()=>{
+ team1=document.getElementById("fv-team1").value;
+ team2=document.getElementById("fv-team2").value;
+ stadium=document.getElementById("fv-stadium").value;
+ document.getElementById("fv-menu").style.display="none";
+ reset();
+ matchStart=performance.now();paused=false;document.getElementById("pause-game").textContent="⏸ PAUSAR";
+};
+function startShotCharge(who){
+  if(chargingPlayer)return;
+  chargingPlayer=who;chargeStartedAt=performance.now();chargePower=0;
+}
+function releaseShotCharge(){
+  if(!chargingPlayer)return;
+  const who=chargingPlayer;
+  const power=Math.min(1,(performance.now()-chargeStartedAt)/1200);
+  chargingPlayer=null;chargePower=0;
+  kick(who,0.45+power*0.95);
+}
+function kick(who,power=1){
+  let dx=ball.x-who.x,dy=ball.y-who.y,d=Math.hypot(dx,dy);
+  if(d<85 && d>0){ballOwner=null;const speed=6+Math.max(.45,Math.min(1.4,power))*7;ball.vx=dx/d*speed;ball.vy=dy/d*speed;}
+}
+function dribble(who){
+  if(who!==player)return;
+  const now=Date.now();
+  if(now<dribbleReadyAt)return;
+  dribbleReadyAt=now+4000;
+  // O drible fica disponível novamente após 4 segundos.
+  sprintUntil=0;
+  spinUntil=performance.now()+650;
+}
+function tackle(attacker,defender){
+  const now=Date.now();
+  if(attacker===player){if(now<tackleReadyAt)return;tackleReadyAt=now+3000;}
+  if(now<attacker.downUntil)return;
+  const d=Math.hypot(defender.x-attacker.x,defender.y-attacker.y);
+  if(d<48){
+    // Se o jogador driblar na hora certa, escapa do carrinho e o robô não cai.
+    if(defender===player && performance.now()<spinUntil){return;}
+    // Depois do carrinho, os dois ficam caídos por 1 segundo.
+    attacker.downUntil=Date.now()+1000;defender.downUntil=Date.now()+1000;
+    if(ballOwner===defender)ballOwner=null;
+    const dx=ball.x-defender.x,dy=ball.y-defender.y;const bd=Math.hypot(dx,dy)||1;ball.vx=dx/bd*4;ball.vy=dy/bd*4;
+  }
+}
+
+
+function goal(){
+  if(ball.x<12 && ball.y>205&&ball.y<355){
+    // O time 2 marcou: a barreira fica para o time que marcou por 10 s.
+    score[1]++; barrierTeam=1; concedingTeam=1; barrierUntil=Date.now()+10000;
+    if(window.cheerGoal)window.cheerGoal(); reset();
+  } else if(ball.x>988 && ball.y>205&&ball.y<355){
+    // O time 1 marcou: a barreira fica para o time que marcou por 10 s.
+    score[0]++; barrierTeam=0; concedingTeam=0; barrierUntil=Date.now()+10000;
+    if(window.cheerGoal)window.cheerGoal(); reset();
+  }
+}
+function movePlayer(who,up,down,left,right){
+  if(Date.now()<who.downUntil)return;
+  let dx=0,dy=0;
+  if(keys[left])dx--; if(keys[right])dx++;
+  if(keys[up])dy--; if(keys[down])dy++;
+  if(dx||dy){let d=Math.hypot(dx,dy);who.moveDX=dx/d;who.moveDY=dy/d;who.x+=dx/d*who.speed;who.y+=dy/d*who.speed;}
+  who.x=Math.max(35,Math.min(965,who.x));who.y=Math.max(35,Math.min(525,who.y));
+}
+function bumpPlayer(who){
+  let dx=ball.x-who.x,dy=ball.y-who.y,d=Math.hypot(dx,dy);
+  if(d>0 && d<who.r+ball.r+3 && Math.hypot(ball.vx,ball.vy)<3){
+    ball.x+=(dx/d)*2;ball.y+=(dy/d)*2;
+  }
+}
+function update(){
+  if(paused || document.getElementById("fv-menu").style.display!=="none")return;
+  movePlayer(player,"w","s","a","d");
+  if(gameMode==="robot"){
+    const now=performance.now();
+    const dx=ball.x-player2.x, dy=ball.y-player2.y, dist=Math.hypot(dx,dy)||1;
+    if(Date.now()>=player2.downUntil){
+      if(dist>24){
+        player2.moveDX=dx/dist; player2.moveDY=dy/dist;
+        const difficultyScale=robotDifficulty==="easy"?0.62:robotDifficulty==="hard"?1.22:0.88;
+        const pace=(dist>150?player2.speed*.72:player2.speed*.78)*difficultyScale;
+        player2.x+=player2.moveDX*pace; player2.y+=player2.moveDY*pace;
+      }
+      player2.x=Math.max(35,Math.min(965,player2.x));player2.y=Math.max(35,Math.min(525,player2.y));
+      // O robô só toma a bola do jogador através de um carrinho.
+      const playerDist=Math.hypot(player.x-player2.x,player.y-player2.y);
+      if(ballOwner===player && playerDist<46 && now>robotTackleAt){
+        tackle(player2,player);
+        robotTackleAt=now+(robotDifficulty==="easy"?1800:robotDifficulty==="hard"?850:1250);
+      }
+      if(ballOwner===player2){
+        // Com a posse, o robô avança para o gol do jogador (lado esquerdo)
+        // e alterna condução, fintas laterais e finalizações.
+        const goalX=22, goalY=280;
+        const attackDX=goalX-player2.x, attackDY=goalY-player2.y;
+        const attackDist=Math.hypot(attackDX,attackDY)||1;
+        if(now>robotThinkAt){
+          const nearPlayer=Math.hypot(player.x-player2.x,player.y-player2.y)<115;
+          const shootChance=player2.x<300?0.72:0.28;
+          if(Math.random()<(nearPlayer?0.48:shootChance)){
+            ballOwner=null;
+            const gx=goalX-ball.x, gy=goalY-ball.y, gd=Math.hypot(gx,gy)||1;
+            const shotSpeed=robotDifficulty==="hard"?12:robotDifficulty==="easy"?8:10;
+            ball.vx=gx/gd*shotSpeed;ball.vy=gy/gd*shotSpeed;
+            robotThinkAt=now+(robotDifficulty==="easy"?1050:robotDifficulty==="hard"?600:800);
+          } else {
+            // Finta: muda de direção para contornar o jogador e continua atacando o gol esquerdo.
+            robotDribbleUntil=now+520;
+            const side=(Math.random()<0.5?-1:1);
+            player2.moveDX=attackDX/attackDist*0.78;
+            player2.moveDY=attackDY/attackDist*0.55+side*0.65;
+            robotThinkAt=now+(robotDifficulty==="easy"?650:robotDifficulty==="hard"?380:500);
+          }
+        }
+        if(now<robotDribbleUntil){
+          player2.x+=player2.moveDX*player2.speed*0.68;
+          player2.y+=player2.moveDY*player2.speed*0.68;
+        } else {
+          player2.moveDX=attackDX/attackDist;player2.moveDY=attackDY/attackDist;
+          player2.x+=player2.moveDX*player2.speed*0.58;
+          player2.y+=player2.moveDY*player2.speed*0.58;
+        }
+        player2.x=Math.max(35,Math.min(965,player2.x));player2.y=Math.max(35,Math.min(525,player2.y));
+      } else if(!ballOwner && dist<35 && now>robotThinkAt){
+        // Recolhe a bola solta sem precisar de carrinho.
+        ballOwner=player2;
+      }
+    }
+  } else {
+    movePlayer(player2,"arrowup","arrowdown","arrowleft","arrowright");
+  }
+  // Domínio simples: quando o jogador chega perto, a bola acompanha o pé durante a corrida.
+  if(ballOwner && Date.now()<ballOwner.downUntil) ballOwner=null;
+  {
+    const d1=Math.hypot(ball.x-player.x,ball.y-player.y);
+    const d2=Math.hypot(ball.x-player2.x,ball.y-player2.y);
+    // O robô só pode tomar a posse do jogador com carrinho; bola solta pode ser recolhida normalmente.
+    if(!ballOwner){
+      if(d1<31 && d1<=d2 && (Math.hypot(player.moveDX,player.moveDY)>0)) ballOwner=player;
+      else if(d2<31) ballOwner=player2;
+    }
+  }
+  if(barrierTeam!==null && Date.now()>=barrierUntil){barrierTeam=null;concedingTeam=null;}
+  if(barrierTeam!==null && ((barrierTeam===0 && ballOwner===player) || (barrierTeam===1 && ballOwner===player2))){barrierTeam=null;concedingTeam=null;}
+  bumpPlayer(player);bumpPlayer(player2);
+  if(ballOwner){
+    // A bola acompanha o jogador com atraso e espaço, rolando livremente em vez de colar no pé.
+    const p=ballOwner, ahead=34;
+    const tx=p.x+p.moveDX*ahead, ty=p.y+p.moveDY*ahead+9;
+    ball.vx+=(tx-ball.x)*.045;
+    ball.vy+=(ty-ball.y)*.045;
+    ball.vx*=.72; ball.vy*=.72;
+    ball.x+=ball.vx; ball.y+=ball.vy;
+    if(Math.hypot(ball.x-p.x,ball.y-p.y)>55) ballOwner=null;
+  } else {
+    ball.x+=ball.vx;ball.y+=ball.vy;ball.vx*=.985;ball.vy*=.985;
+  }
+  // Barreira invisível: duas retas até o círculo central, arco por fora e retas até a lateral oposta.
+  if(barrierTeam!==null){
+    const wallX=500, circleY=280, circleR=78, pad=ball.r+3;
+    const topY=circleY-circleR, bottomY=circleY+circleR;
+    // O time que marcou fica protegido; a barreira curva para o lado desse time.
+    const side = barrierTeam===0 ? -1 : 1;
+    const crossed=(x,nx)=>(x<wallX && nx>=wallX)||(x>wallX && nx<=wallX);
+    if(ballOwner===null){
+      const nx=ball.x+ball.vx, ny=ball.y+ball.vy;
+      if(crossed(ball.x,nx) && (ny<topY || ny>bottomY)){
+        ball.x=wallX+(ball.x<wallX?-pad:pad); ball.vx*=-0.8;
+      }
+      const dx=ball.x-wallX, dy=ball.y-circleY, dist=Math.hypot(dx,dy);
+      const nextDist=Math.hypot(ball.x+ball.vx-wallX,ball.y+ball.vy-circleY);
+      if(dx*side>0 && ball.y>=topY-pad && ball.y<=bottomY+pad && dist<circleR+pad && nextDist<dist){
+        const a=Math.atan2(dy,dx), safe=circleR+pad;
+        ball.x=wallX+Math.cos(a)*safe; ball.y=circleY+Math.sin(a)*safe;
+        const nx=-Math.sin(a), ny=Math.cos(a), dot=ball.vx*nx+ball.vy*ny;
+        ball.vx-=2*dot*nx; ball.vy-=2*dot*ny;
+      }
+    } else {
+      const p=ballOwner, nx=p.x+p.moveDX*34, ny=p.y+p.moveDY*34;
+      if(crossed(p.x,nx) && (ny<topY || ny>bottomY)){
+        p.x=wallX+(p.x<wallX?-p.r-2:p.r+2); p.moveDX=0;
+      }
+      const dx=p.x-wallX, dy=p.y-circleY, dist=Math.hypot(dx,dy), safe=circleR+p.r+2;
+      const nextDist=Math.hypot(nx-wallX,ny-circleY);
+      if(dx*side>0 && p.y>=topY-p.r && p.y<=bottomY+p.r && dist<safe && nextDist<dist){
+        const a=Math.atan2(dy,dx); p.x=wallX+Math.cos(a)*safe; p.y=circleY+Math.sin(a)*safe; p.moveDX=0;
+      }
+    }
+  }
+  // Correção final e rígida da barreira: impede a bola de atravessar mesmo quando está dominada.
+  if(barrierTeam!==null){
+    const wallX=500, cy=280, r=78+ball.r+3, top=cy-r, bottom=cy+r;
+    const side=barrierTeam===0?-1:1;
+    const prevX=ball.x-ball.vx, prevY=ball.y-ball.vy;
+    const crossed=(prevX<wallX && ball.x>=wallX)||(prevX>wallX && ball.x<=wallX);
+    if(crossed && (ball.y<top || ball.y>bottom)){
+      ball.x=prevX<wallX?wallX-ball.r-2:wallX+ball.r+2;
+      ball.vx=prevX<wallX?-Math.abs(ball.vx)*0.75:Math.abs(ball.vx)*0.75;
+      if(ballOwner){ballOwner.x=ball.x-(ballOwner.moveDX*34);ballOwner.x=Math.max(35,Math.min(965,ballOwner.x));}
+    }
+    // Na parte curva, a bola não pode invadir o raio da barreira pelo lado do time que marcou.
+    const dx=ball.x-wallX, dy=ball.y-cy, d=Math.hypot(dx,dy);
+    if(dx*side>0 && ball.y>=cy-78-ball.r && ball.y<=cy+78+ball.r && d<r){
+      const a=Math.atan2(dy,dx);
+      ball.x=wallX+Math.cos(a)*r; ball.y=cy+Math.sin(a)*r;
+      const nx=Math.cos(a), ny=Math.sin(a), dot=ball.vx*nx+ball.vy*ny;
+      if(dot<0){ball.vx-=2*dot*nx;ball.vy-=2*dot*ny;}
+      if(ballOwner){ballOwner.x=ball.x-ballOwner.moveDX*34;ballOwner.y=ball.y-ballOwner.moveDY*34;}
+    }
+  }
+  // Limites do estádio: a bola rebate nas laterais e não pode sair por cima/baixo.
+  // Nas extremidades, a abertura do gol continua livre para registrar o gol normalmente.
+  const ballR=ball.r||8;
+  const topLimit=18+ballR, bottomLimit=542-ballR;
+  if(ball.y<topLimit){ball.y=topLimit;ball.vy=Math.abs(ball.vy)*0.82;}
+  if(ball.y>bottomLimit){ball.y=bottomLimit;ball.vy=-Math.abs(ball.vy)*0.82;}
+  const inGoalMouth=ball.y>205&&ball.y<355;
+  if(ball.x<12&&!inGoalMouth){ball.x=12;ball.vx=Math.abs(ball.vx)*.8;}
+  if(ball.x>988&&!inGoalMouth){ball.x=988;ball.vx=-Math.abs(ball.vx)*.8;}
+  // Se estiver dominada, mantém também o jogador dentro do campo para a bola não escapar com ele.
+  if(ballOwner){
+    ballOwner.y=Math.max(28,Math.min(532,ballOwner.y));
+    ball.y=Math.max(topLimit,Math.min(bottomLimit,ball.y));
+  }
+  goal();
+}
+function draw(){
+  ctx.clearRect(0,0,c.width,c.height);
+
+  // Câmera: transforma o campo para criar dois estilos de transmissão.
+  let zoom = camera==="fifa" ? 1.28 : 0.90;
+  // Câmera TV lateral de transmissão: campo quase inteiro visível, com acompanhamento discreto da bola.
+  // O deslocamento é limitado para não cortar as laterais nem perder a visão tática do campo.
+  let targetX = camera==="fifa" ? player.x : 500 + Math.max(-45, Math.min(45, (ball.x-500)*0.12));
+  let targetY = camera==="fifa" ? player.y : 280 + Math.max(-18, Math.min(18, (ball.y-280)*0.08));
+  camX += (targetX-camX)*(camera==="tv"?0.055:0.045);
+  camY += (targetY-camY)*(camera==="tv"?0.055:0.045);
+  let camXNow=camX, camYNow=camY;
+
+  ctx.save();
+  ctx.translate(c.width/2, c.height/2);
+  ctx.scale(zoom,zoom);
+  ctx.translate(-camXNow,-camYNow);
+
+  // Gramado com faixas alternadas, como um campo preparado para transmissão.
+  ctx.fillStyle="#126d31";ctx.fillRect(-1000,-1000,3000,3000);
+  for(let stripe=0;stripe<10;stripe++){
+    ctx.fillStyle = stripe%2===0 ? "#19853e" : "#167638";
+    ctx.fillRect(15+stripe*97,20,97,520);
+  }
+  // Linhas do campo por cima do gramado.
+  ctx.strokeStyle="white";ctx.lineWidth=4;ctx.strokeRect(15,20,970,520);
+  ctx.beginPath();ctx.moveTo(500,20);ctx.lineTo(500,540);ctx.stroke();
+  ctx.beginPath();ctx.arc(500,280,75,0,Math.PI*2);ctx.stroke();
+  ctx.strokeRect(15,190,120,180);ctx.strokeRect(865,190,120,180);
+  ctx.fillStyle="white";ctx.fillRect(0,220,15,120);ctx.fillRect(985,220,15,120);
+
+  // Estádio com várias arquibancadas, anéis de concreto, setores cheios e placas de LED.
+  const crowdColor = ({"Beira-Rio":"#b5122b","Arena do Grêmio":"#1682c4","Allianz Parque":"#168447","Maracanã":"#c92335","Mineirão":"#2877d4","Arena MRV":"#252525"})[stadium]||"#b5122b";
+  ctx.fillStyle="#101820";ctx.fillRect(-20,-160,1040,180);ctx.fillRect(-20,540,1040,180);
+  for(let tier=0;tier<5;tier++){
+    const yTop=-145+tier*31, yBottom=555+tier*31;
+    ctx.fillStyle=["#26323b","#36434b","#202b33","#46515a","#18242b"][tier];
+    ctx.fillRect(0,yTop,1000,27);ctx.fillRect(0,yBottom,1000,27);
+    ctx.fillStyle="#ffffff18";ctx.fillRect(0,yTop+24,1000,3);ctx.fillRect(0,yBottom+24,1000,3);
+    for(let x=5;x<995;x+=9){
+      const n=(x*7+tier*19)%13;
+      ctx.fillStyle=n<3?"#f1f3f5":(n<6?crowdColor:(n<9?"#8cabbc":"#20252b"));
+      ctx.fillRect(x,yTop+5+(n%3)*4,5,7);ctx.fillRect(x,yBottom+5+(n%3)*4,5,7);
+    }
+  }
+  // Arquibancadas laterais com fileiras de torcedores.
+  ctx.fillStyle="#17232b";ctx.fillRect(-150,20,165,520);ctx.fillRect(985,20,165,520);
+  for(let row=0;row<19;row++)for(let col=0;col<9;col++){
+    const yy=28+row*27, xxL=-140+col*17, xxR=1000+col*17;
+    ctx.fillStyle=((row+col)%5===0)?"#f2f2f2":(((row*3+col)%4===0)?crowdColor:"#8197a4");
+    ctx.fillRect(xxL,yy,10,9);ctx.fillRect(xxR,yy,10,9);
+  }
+  // Publicidade LED e nome do estádio.
+  ctx.fillStyle=crowdColor;ctx.fillRect(15,20,970,15);ctx.fillRect(15,525,970,15);
+  for(let x=20;x<975;x+=125){ctx.fillStyle="#f4f7f8";ctx.fillRect(x,22,100,10);ctx.fillStyle="#12202a";ctx.font="bold 8px Arial";ctx.fillText("FIFA VINI",x+18,30);ctx.fillText("FIFA VINI",x+18,535);}
+  ctx.fillStyle="#fff";ctx.font="bold 18px Arial";ctx.fillText(stadium,28,45);
+
+  // A barreira é totalmente invisível: só atua na física da bola.
+
+  // Jogadores dos dois clubes selecionados
+  function drawPlayer(p,team,label){
+    // Animação simples de queda após carrinho certeiro.
+    const knocked=Date.now()<p.downUntil;
+    ctx.save();
+    if(knocked){ctx.translate(p.x,p.y);ctx.rotate(-0.9);ctx.translate(-p.x,-p.y);}
+    else if(p===player && performance.now()<spinUntil){ctx.translate(p.x,p.y);ctx.rotate(((650-(spinUntil-performance.now()))/650)*Math.PI*2);ctx.translate(-p.x,-p.y);}
+    // Sombra no gramado e corpo em vista elevada, mantendo leitura clara durante o jogo.
+    ctx.fillStyle="rgba(0,0,0,.28)";ctx.beginPath();ctx.ellipse(p.x+2,p.y+8,15,8,0,0,Math.PI*2);ctx.fill();
+    // pernas e chuteiras
+    ctx.strokeStyle="#171717";ctx.lineWidth=5;ctx.lineCap="round";
+    ctx.beginPath();ctx.moveTo(p.x-5,p.y+5);ctx.lineTo(p.x-7,p.y+13);ctx.moveTo(p.x+5,p.y+5);ctx.lineTo(p.x+7,p.y+13);ctx.stroke();
+    ctx.fillStyle="#f0f0f0";ctx.fillRect(p.x-11,p.y+10,8,4);ctx.fillRect(p.x+4,p.y+10,8,4);
+    // braços e camisa do clube
+    ctx.strokeStyle=teamColors[team]||"#fff";ctx.lineWidth=6;
+    ctx.beginPath();ctx.moveTo(p.x-8,p.y-4);ctx.lineTo(p.x-13,p.y+3);ctx.moveTo(p.x+8,p.y-4);ctx.lineTo(p.x+13,p.y+3);ctx.stroke();
+    ctx.fillStyle=teamColors[team]||"#fff";ctx.beginPath();ctx.roundRect(p.x-10,p.y-11,20,20,5);ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle="#ffd2ad";ctx.beginPath();ctx.arc(p.x,p.y-14,6.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#222";ctx.beginPath();ctx.arc(p.x,p.y-16,6.5,Math.PI,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#fff";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.fillText(knocked?"CAÍDO":label,p.x,p.y-29);ctx.textAlign="left";
+    ctx.restore();
+  }
+  drawPlayer(player,team1,"P1");
+  drawPlayer(player2,team2,"P2");
+
+  // bola com painéis escuros e sombra curta
+  ctx.fillStyle="rgba(0,0,0,.25)";ctx.beginPath();ctx.ellipse(ball.x+2,ball.y+5,ball.r+2,ball.r*.55,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();
+  ctx.save();ctx.translate(ball.x,ball.y);ctx.fillStyle="#202020";
+  ctx.beginPath();ctx.moveTo(0,-4);ctx.lineTo(4,-1);ctx.lineTo(3,4);ctx.lineTo(-3,4);ctx.lineTo(-4,-1);ctx.closePath();ctx.fill();ctx.restore();
+  ctx.strokeStyle="#111";ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.stroke();
+
+  ctx.restore();
+
+  // HUD de transmissão com placar, relógio e competição.
+  const elapsed=Math.max(0,performance.now()-matchStart);
+  const gameMinute=Math.min(90,Math.floor(elapsed/3000));
+  const clockText=gameMinute>=90?"90+":""+gameMinute;
+  ctx.fillStyle="rgba(0,0,0,.82)";ctx.fillRect(35,10,340,54);
+  ctx.fillStyle="#d7ff00";ctx.fillRect(35,10,340,4);
+  ctx.fillStyle="white";ctx.font="bold 12px Arial";ctx.textAlign="left";
+  ctx.fillText((teamNames[team1]||team1).toUpperCase(),47,31);
+  ctx.font="bold 20px Arial";ctx.fillText(`${score[0]}  -  ${score[1]}`,150,43);
+  ctx.font="bold 12px Arial";ctx.fillText((teamNames[team2]||team2).toUpperCase(),250,31);
+  ctx.fillStyle="#d7ff00";ctx.font="bold 11px Arial";ctx.fillText(clockText+"'",190,57);
+  ctx.textAlign="left";
+  const stageSelect=document.getElementById("fv-stage");
+  const stageLabel=stageSelect?.value==="groups"?"FASE DE GRUPOS":stageSelect?.value==="knockout"?"MATA-MATA":"FINAL • TAÇA EM JOGO";
+  ctx.fillStyle="rgba(0,0,0,.72)";ctx.fillRect(35,68,180,20);
+  ctx.fillStyle="#d7ff00";ctx.font="bold 10px Arial";ctx.fillText(stageLabel,44,82);
+  // Barra de força do chute: cresce enquanto o botão/tecla de chute fica pressionado.
+  if(chargingPlayer){
+    const elapsed=Math.min(1,(performance.now()-chargeStartedAt)/1200);
+    chargePower=elapsed;
+    const bx=405,by=490,bw=190,bh=18;
+    ctx.fillStyle="rgba(0,0,0,.78)";ctx.fillRect(bx-5,by-24,bw+10,48);
+    ctx.fillStyle="#fff";ctx.font="bold 12px Arial";ctx.textAlign="center";ctx.fillText("FORÇA DO CHUTE",500,by-9);
+    ctx.fillStyle="#333";ctx.fillRect(bx,by,bw,bh);
+    ctx.fillStyle=elapsed>.78?"#ff453a":elapsed>.48?"#ffd600":"#d7ff00";ctx.fillRect(bx,by,bw*elapsed,bh);
+    ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.strokeRect(bx,by,bw,bh);ctx.textAlign="left";
+  }
+
+  ctx.font="bold 15px Arial";
+  ctx.fillText(`${competition.toUpperCase()}  •  FIFA VINI`, 20, 30);
+}
+function loop(){update();draw();requestAnimationFrame(loop)} loop();
+</script>
+
+<style>
+#mobile-controls-fifa-vini{position:fixed;left:24px;bottom:24px;z-index:9999;width:142px;height:142px;border:2px solid rgba(255,255,255,.65);border-radius:50%;background:radial-gradient(circle,#ffffff16 0 32%,#10182099 34% 100%);box-shadow:0 3px 14px #0009;touch-action:none;user-select:none;display:flex;align-items:center;justify-content:center}
+#mobile-controls-fifa-vini .stick{width:64px;height:64px;border:2px solid #ffffffdd;border-radius:50%;background:linear-gradient(145deg,#f4f7f8bb,#263743ee);box-shadow:0 3px 10px #000a;pointer-events:none;transform:translate(0,0)}
+#mobile-controls-fifa-vini:after{content:"";position:absolute;inset:8px;border-radius:50%;border:1px solid #ffffff30;pointer-events:none}
+#mobile-tackle-fifa-vini{position:fixed;right:30px;bottom:145px;z-index:9999;width:76px;height:48px;border:2px solid white;border-radius:9px;background:rgba(30,60,90,.9);color:white;font-size:11px;font-weight:bold;touch-action:none}
+#mobile-dribble-fifa-vini{position:fixed;right:112px;bottom:34px;z-index:9999;width:72px;height:72px;border:2px solid white;border-radius:50%;background:rgba(35,130,65,.92);color:white;font-size:12px;font-weight:bold;touch-action:none}
+#mobile-kick-fifa-vini{position:fixed;right:24px;bottom:24px;z-index:9999;width:100px;height:100px;border:2px solid white;border-radius:50%;background:rgba(210,40,35,.88);color:white;font-size:14px;font-weight:bold;touch-action:none}
+</style>
+<div id="mobile-controls-fifa-vini" aria-label="Joystick de movimento"><div class="stick" id="fv-joystick-stick"></div></div>
+<button id="mobile-tackle-fifa-vini" aria-label="Carrinho">CARRINHO</button>
+<button id="mobile-kick-fifa-vini" aria-label="Chutar">CHUTAR</button>
+<button id="mobile-dribble-fifa-vini" aria-label="Drible">DRIBLE</button>
+<script>
+(function(){
+ const controls=document.getElementById('mobile-controls-fifa-vini');
+ const kick=document.getElementById('mobile-kick-fifa-vini');
+ const tackle=document.getElementById('mobile-tackle-fifa-vini');
+ const dribbleButton=document.getElementById('mobile-dribble-fifa-vini');
+ function send(type,key){
+  const code = key===' ' ? 'Space' : (key==='Enter' ? 'Enter' : '');
+  document.dispatchEvent(new KeyboardEvent(type,{key:key,code:code,bubbles:true,cancelable:true}));
+  window.dispatchEvent(new KeyboardEvent(type,{key:key,code:code,bubbles:true,cancelable:true}));
+ }
+ const stick=document.getElementById('fv-joystick-stick');
+ const activeKeys=new Set();
+ const originalTackleText=tackle.textContent, originalDribbleText=dribbleButton.textContent;
+ setInterval(()=>{
+  const now=Date.now(), tackleLeft=Math.max(0,Math.ceil((tackleReadyAt-now)/1000)), dribbleLeft=Math.max(0,Math.ceil((dribbleReadyAt-now)/1000));
+  tackle.textContent=tackleLeft?`${originalTackleText} (${tackleLeft}s)`:originalTackleText;
+  dribbleButton.textContent=dribbleLeft?`${originalDribbleText} (${dribbleLeft}s)`:originalDribbleText;
+  tackle.style.opacity=tackleLeft?'.65':'1'; dribbleButton.style.opacity=dribbleLeft?'.65':'1';
+ },100);
+
+ function setKey(key,on){if(on&&!activeKeys.has(key)){activeKeys.add(key);send('keydown',key)}else if(!on&&activeKeys.has(key)){activeKeys.delete(key);send('keyup',key)}}
+ function moveStick(e){const r=controls.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const max=42,len=Math.hypot(dx,dy)||1;if(len>max){dx=dx/len*max;dy=dy/len*max}stick.style.transform=`translate(${dx}px,${dy}px)`;setKey('a',dx<-12);setKey('d',dx>12);setKey('w',dy<-12);setKey('s',dy>12)}
+ function releaseStick(){activeKeys.forEach(k=>send('keyup',k));activeKeys.clear();stick.style.transform='translate(0,0)'}
+ controls.addEventListener('pointerdown',e=>{e.preventDefault();controls.setPointerCapture?.(e.pointerId);moveStick(e)});
+ controls.addEventListener('pointermove',e=>{if(e.buttons||e.pressure>0)moveStick(e)});
+ ['pointerup','pointercancel','lostpointercapture'].forEach(evt=>controls.addEventListener(evt,e=>{e.preventDefault?.();releaseStick()}));
+ controls.addEventListener('contextmenu',e=>e.preventDefault());
+ const start=e=>{e.preventDefault();send('keydown',' ')};
+ const end=e=>{e.preventDefault();send('keyup',' ')};
+ kick.addEventListener('pointerdown',start);
+ ['pointerup','pointercancel','pointerleave'].forEach(evt=>kick.addEventListener(evt,end));
+ tackle.addEventListener('pointerdown',e=>{e.preventDefault();send('keydown','e');send('keyup','e')});
+ dribbleButton.addEventListener('pointerdown',e=>{e.preventDefault();send('keydown','q');send('keyup','q')});
+})();
+</script>
+
+<script id="fv-extra-features">
+(function(){
+ const rotateTip=document.getElementById('fv-rotate-tip');
+ function requestLandscape(){try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}catch(e){}}
+ document.getElementById('fv-start').addEventListener('click',requestLandscape);
+ document.getElementById('fv-main').addEventListener('click',requestLandscape);
+ function updateOrientationTip(){const mobile=matchMedia('(max-width: 800px)').matches;const portrait=matchMedia('(orientation: portrait)').matches;const inGame=document.getElementById('fv-menu').style.display==='none';rotateTip.classList.toggle('show',mobile&&portrait&&inGame);}
+ window.addEventListener('resize',updateOrientationTip);window.addEventListener('orientationchange',updateOrientationTip);
+ document.getElementById('fv-start').addEventListener('click',()=>setTimeout(updateOrientationTip,100));
+})();
+</script>
+
+
+<script id="fv-louder-crowd-audio">
+(function(){
+ let audioCtx=null, master=null, started=false, noiseSource=null, crowdGain=null, swellGain=null;
+ function startCrowd(){
+  if(started) { if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); return; }
+  try {
+   const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
+   audioCtx=new AC(); master=audioCtx.createGain(); master.gain.value=0.9; master.connect(audioCtx.destination);
+   // Camada contínua de murmúrio da arquibancada, mais alta que a versão anterior.
+   const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*3,audioCtx.sampleRate), data=buffer.getChannelData(0);
+   let smooth=0; for(let i=0;i<data.length;i++){smooth=smooth*0.91+(Math.random()*2-1)*0.09;data[i]=smooth*2.8;}
+   noiseSource=audioCtx.createBufferSource(); noiseSource.buffer=buffer; noiseSource.loop=true;
+   const band=audioCtx.createBiquadFilter(); band.type='bandpass'; band.frequency.value=620; band.Q.value=0.65;
+   crowdGain=audioCtx.createGain(); crowdGain.gain.value=0.34;
+   noiseSource.connect(band); band.connect(crowdGain); crowdGain.connect(master); noiseSource.start();
+   // Ondas suaves de gritos e cantos para dar sensação de torcida cheia.
+   const osc=audioCtx.createOscillator(); osc.type='sine'; osc.frequency.value=0.16;
+   swellGain=audioCtx.createGain(); swellGain.gain.value=0.10;
+   const swellFilter=audioCtx.createBiquadFilter(); swellFilter.type='lowpass'; swellFilter.frequency.value=900;
+   const swellNoise=audioCtx.createBufferSource(); swellNoise.buffer=buffer; swellNoise.loop=true;
+   osc.connect(swellGain.gain); swellNoise.connect(swellFilter); swellFilter.connect(swellGain); swellGain.connect(master);
+   osc.start(); swellNoise.start(); started=true;
+   if(audioCtx.state==='suspended')audioCtx.resume();
+  }catch(e){}
+ }
+ // Grito de gol: coro vocalizado de torcida, como "Aeeeeeeee!", por 2 segundos.
+ window.cheerGoal=function(){
+  try{
+   startCrowd(); if(!audioCtx)return;
+   const now=audioCtx.currentTime, duration=2;
+   const burst=audioCtx.createBufferSource();
+   const buf=audioCtx.createBuffer(1,Math.floor(audioCtx.sampleRate*duration),audioCtx.sampleRate);
+   const d=buf.getChannelData(0); let smooth=0;
+   for(let i=0;i<d.length;i++){
+    smooth=smooth*0.76+(Math.random()*2-1)*0.24;
+    const t=i/d.length;
+    const fadeIn=Math.min(1,t*9), fadeOut=Math.min(1,(1-t)*7);
+    const pulse=0.62+0.38*Math.sin(t*Math.PI*5);
+    d[i]=smooth*fadeIn*fadeOut*pulse*4.8;
+   }
+   burst.buffer=buf;
+   const filter=audioCtx.createBiquadFilter();filter.type='bandpass';filter.frequency.setValueAtTime(780,now);filter.frequency.linearRampToValueAtTime(1650,now+0.32);filter.frequency.linearRampToValueAtTime(1350,now+0.88);filter.Q.value=.8;
+   const gain=audioCtx.createGain();gain.gain.setValueAtTime(.01,now);gain.gain.linearRampToValueAtTime(1,now+.18);gain.gain.setValueAtTime(.92,now+0.33);gain.gain.setValueAtTime(.72,now+0.78);gain.gain.exponentialRampToValueAtTime(.01,now+duration);
+   burst.connect(filter);filter.connect(gain);gain.connect(master);burst.start(now);burst.stop(now+duration);
+   // Harmônicos em coro para lembrar várias vozes gritando "Aeeeeeeee!".
+   [165,220,330,440,554,660,880].forEach((freq,i)=>{
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='triangle';
+    o.frequency.setValueAtTime(freq,now+.012*i);o.frequency.linearRampToValueAtTime(freq*1.045,now+.28+i*.012);
+    g.gain.setValueAtTime(.0001,now);g.gain.linearRampToValueAtTime(.052,now+.12+i*.015);g.gain.setValueAtTime(.045,now+0.85);g.gain.exponentialRampToValueAtTime(.0001,now+duration);
+    o.connect(g);g.connect(master);o.start(now);o.stop(now+duration);
+   });
+  }catch(e){}
+ };
+ // A torcida só começa quando o jogador aperta COMEÇAR PARTIDA.
+ document.getElementById('fv-start')?.addEventListener('click',startCrowd);
+ document.addEventListener('pointerdown',function(){if(started&&audioCtx?.state==='suspended')audioCtx.resume();},{passive:true});
+})();
+</script>
+
+
+<script id="fv-account-and-modes">
+(function(){
+ const accountScreen=document.getElementById('fv-account-screen');
+ const modeScreen=document.getElementById('fv-mode-screen');
+ const form=document.getElementById('fv-account-form');
+ const nameInput=document.getElementById('fv-username');
+ const savedName=document.getElementById('fv-saved-name');
+ const menu=document.getElementById('fv-menu');
+ const note=document.getElementById('fv-online-note');
+ const storageKey='fifaViniUsername';
+ function showModes(name){
+   savedName.textContent=name;
+   accountScreen.style.display='none';
+   modeScreen.style.display='flex';
+   menu.style.display='none';
+ }
+ let stored='';
+ try{stored=localStorage.getItem(storageKey)||'';}catch(e){}
+ if(stored.trim()) showModes(stored.trim());
+ form.addEventListener('submit',function(e){
+   e.preventDefault();
+   const name=nameInput.value.trim().replace(/[<>]/g,'').slice(0,18);
+   if(!name){nameInput.focus();return;}
+   try{localStorage.setItem(storageKey,name);}catch(e){}
+   showModes(name);
+ });
+ document.getElementById('fv-play-robot').addEventListener('click',function(){
+   modeScreen.style.display='none';
+   document.getElementById('fv-difficulty-screen').style.display='flex';
+ });
+ document.querySelectorAll('[data-robot-difficulty]').forEach(function(btn){
+   btn.addEventListener('click',function(){
+     robotDifficulty=btn.dataset.robotDifficulty;
+     gameMode='robot';
+     document.getElementById('fv-difficulty-screen').style.display='none';
+     modeScreen.style.display='none';
+     menu.style.display='flex';
+     note.style.display='none';
+     const badge=menu.querySelector('.fv-badge');
+     if(badge)badge.textContent='MODO ROBÔ • '+robotDifficulty.toUpperCase();
+     // No modo robô, ocultar a escolha inicial de estádio; o valor continua disponível no jogo.
+     const stadiumLabel=menu.querySelector('label[for="fv-stadium"]');
+     const stadiumSelect=document.getElementById('fv-stadium');
+     const stadiumPreview=document.getElementById('fv-stadium-preview');
+     if(stadiumLabel)stadiumLabel.style.display='none';
+     if(stadiumSelect)stadiumSelect.style.display='none';
+     if(stadiumPreview)stadiumPreview.style.display='none';
+     const p2Label=document.querySelector('label[for="fv-team2"]');
+     if(p2Label)p2Label.textContent='Time do robô';
+   });
+ });
+ document.getElementById('fv-back-modes').addEventListener('click',function(){document.getElementById('fv-difficulty-screen').style.display='none';modeScreen.style.display='flex';});
+ const onlineScreen=document.getElementById('fv-online-screen');
+ const nearby=document.getElementById('fv-nearby-users');
+ const inviteStatus=document.getElementById('fv-invite-status');
+ const matchSetup=document.getElementById('fv-match-setup');
+ const incomingInvite=document.getElementById('fv-incoming-invite');
+ const incomingInviteMessage=document.getElementById('fv-incoming-invite-message');
+ const incomingInviteStatus=document.getElementById('fv-incoming-invite-status');
+ let pendingInvite=null;
+ // UI de convite recebido; o servidor multiplayer deverá chamar esta função quando chegar um convite real.
+ window.fifaViniShowIncomingInvite=function(username,details){
+   pendingInvite={username:String(username||'Usuário').slice(0,30),details:details||null};
+   incomingInviteMessage.textContent=pendingInvite.username+' está te convidando para jogar!';
+   incomingInviteStatus.textContent='';
+   incomingInvite.style.display='flex';
+ };
+ document.getElementById('fv-accept-invite').addEventListener('click',function(){
+   if(!pendingInvite)return;
+   incomingInviteStatus.textContent='Convite aceito! Para entrar na mesma partida, o servidor multiplayer precisa estar conectado.';
+   // Mantém a confirmação visível até o usuário fechar a janela.
+   document.getElementById('fv-accept-invite').disabled=true;
+   document.getElementById('fv-decline-invite').textContent='FECHAR';
+ });
+ document.getElementById('fv-decline-invite').addEventListener('click',function(){
+   incomingInvite.style.display='none';pendingInvite=null;
+   document.getElementById('fv-accept-invite').disabled=false;
+   document.getElementById('fv-decline-invite').textContent='RECUSAR';
+   incomingInviteStatus.textContent='';
+ });
+ let selectedOpponent='';
+ function renderNearby(){
+   nearby.innerHTML='';
+   nearby.innerHTML='<div class="fv-online-status">Nenhum jogador real disponível: conecte o servidor multiplayer para listar usuários conectados e receber convites.</div>';
+ }
+ document.getElementById('fv-play-online').addEventListener('click',function(){
+   modeScreen.style.display='none';onlineScreen.style.display='block';renderNearby();note.style.display='none';
+ });
+ document.getElementById('fv-online-back').addEventListener('click',function(){onlineScreen.style.display='none';modeScreen.style.display='flex';});
+ document.getElementById('fv-send-invite').addEventListener('click',function(){
+   if(!selectedOpponent)return;
+   inviteStatus.style.display='block';
+   inviteStatus.textContent='Configuração da partida: estádio '+document.getElementById('fv-online-stadium').selectedOptions[0].text+'; clube '+document.getElementById('fv-online-team').value+'; formato '+document.getElementById('fv-online-format').value+'. O convite não foi enviado: o servidor multiplayer ainda precisa ser conectado.';
+ });
+ document.getElementById('fv-change-user').addEventListener('click',function(){
+   modeScreen.style.display='none';
+   accountScreen.style.display='flex';
+   note.style.display='none';
+   try{localStorage.removeItem(storageKey);}catch(e){}
+   nameInput.value='';
+   nameInput.focus();
+ });
+})();
+</script>
+
+</body>
+</html>
